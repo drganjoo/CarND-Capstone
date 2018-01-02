@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
+import tf
 from geometry_msgs.msg import PoseStamped
 from styx_msgs.msg import Lane, Waypoint
 
@@ -37,16 +38,25 @@ class WaypointUpdater(object):
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
         # TODO: Add other member variables you need below
-
+        self.way_points = []
         rospy.spin()
 
     def pose_cb(self, msg):
-        # TODO: Implement
         pass
 
     def waypoints_cb(self, waypoints):
-        # TODO: Implement
-        pass
+        self.way_points = []
+
+        for waypoint in waypoints.waypoints:
+            position = waypoint.pose.pose.position
+            angle_q = waypoint.pose.pose.orientation
+            # euler_angle = tf.transformations.euler_from_quaternion(angle_q)
+            euler_angle = 0
+            velocity = waypoint.twist.twist.linear.x
+
+            self.way_points.append([position, euler_angle, angle_q, velocity])
+
+            rospy.loginfo('%s, %s, %s, %s', position.x, position.y, position.z, euler_angle)
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
