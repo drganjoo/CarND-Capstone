@@ -31,32 +31,66 @@ class WaypointUpdater(object):
 
         rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
+        rospy.Publisher('/final_waypoints', Lane)
 
         # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
-
 
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
         # TODO: Add other member variables you need below
-        self.way_points = []
+        self.way_points = None
+        self.last_point = 0
+        self.points_to_look = 0      # how many points to look at
+
+        print('WaypointUpdater about to go for spinning')
         rospy.spin()
 
     def pose_cb(self, msg):
-        pass
+        print('pose_cb called')
+
+        if self.way_points is None:
+            return
+
+        position = msg.pose.position
+        angle_q = msg.pose.quaternion
+
+        # compute distance to the next way point and figure out which is the closest
+        least_index = self.last_point
+        least_distance = float('+inf')
+        total_wp = len(self.way_points)
+
+        dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2  + (a.z-b.z)**2)
+
+        for i in range(self.points_to_look):
+            wp_index = (self.last_point + i) % total_wp
+            wp = self.way_points[wp_index]
+            distance = dl(position, wp.pose.pose.position)
+
+            if distance < least_distance:
+                least_distance = distance
+                least_index = wp_index
+
+        # publish as many as LOOKAHEAD points
+
+
 
     def waypoints_cb(self, waypoints):
-        self.way_points = []
+        self.way_points = waypoints
+        self.points_to_look = len(waypoints.waypoints)
 
-        for waypoint in waypoints.waypoints:
-            position = waypoint.pose.pose.position
-            angle_q = waypoint.pose.pose.orientation
+        print('Waypoints received')
+
+        # for waypoint in waypoints.waypoints:
+        #     position = waypoint.pose.pose.position
+            # angle_q = waypoint.pose.pose.orientation
             # euler_angle = tf.transformations.euler_from_quaternion(angle_q)
-            euler_angle = 0
-            velocity = waypoint.twist.twist.linear.x
+            # euler_angle = 0
+            # velocity = waypoint.twist.twist.linear.x
 
-            self.way_points.append([position, euler_angle, angle_q, velocity])
+            #self.way_points.append([position, euler_angle, angle_q, velocity])
 
-            rospy.loginfo('%s, %s, %s, %s', position.x, position.y, position.z, euler_angle)
+            # rospy.loginfo('%s, %s, %s, %s', position.x, position.y, position.z, euler_angle)
+            # self.way_points.append(position.x, position.y, position.z)
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
