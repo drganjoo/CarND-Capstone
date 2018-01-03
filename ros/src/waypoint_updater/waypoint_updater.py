@@ -31,11 +31,11 @@ class WaypointUpdater(object):
 
         rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
-        rospy.Publisher('/final_waypoints', Lane)
+        self.final_pub = rospy.Publisher('/final_waypoints', Lane, queue_size=1)
 
         # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
 
-        self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
+        self.final_waypoints_pub = rospy.Publisher('/final_waypoints', Lane, queue_size=1)
 
         # TODO: Add other member variables you need below
         self.way_points = None
@@ -52,7 +52,7 @@ class WaypointUpdater(object):
             return
 
         position = msg.pose.position
-        angle_q = msg.pose.quaternion
+        # angle_q = msg.pose.orientation
 
         # compute distance to the next way point and figure out which is the closest
         least_index = self.last_point
@@ -71,11 +71,21 @@ class WaypointUpdater(object):
                 least_index = wp_index
 
         # publish as many as LOOKAHEAD points
+        lane = Lane()
+        for i in range(LOOKAHEAD_WPS):
+            index = (i + least_index) % total_wp
+            lane.waypoints.append(self.way_points[index])
 
+        # next time we would like to look closeby to where we found the vehicle
+        # to be for time t-1.
+        self.points_to_look = 100
+        self.last_point = least_index
 
+        # publish the points to the rest of the nodes
+        self.final_pub.publish(lane)
 
     def waypoints_cb(self, waypoints):
-        self.way_points = waypoints
+        self.way_points = waypoints.waypoints
         self.points_to_look = len(waypoints.waypoints)
 
         print('Waypoints received')
