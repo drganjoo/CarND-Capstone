@@ -41,13 +41,12 @@ class WaypointUpdater(object):
         self.way_points = None
         self.last_point = 0
         self.points_to_look = 0      # how many points to look at
+        self.last_time = rospy.Time().now()
 
         print('WaypointUpdater about to go for spinning')
         rospy.spin()
 
     def pose_cb(self, msg):
-        print('pose_cb called')
-
         if self.way_points is None:
             return
 
@@ -83,6 +82,11 @@ class WaypointUpdater(object):
 
         # publish the points to the rest of the nodes
         self.final_pub.publish(lane)
+
+        if rospy.Time().now() - self.last_time > rospy.Duration(1):
+            print('published, lookfor: {}, start_index: {}'.format(self.points_to_look, self.last_point))
+            self.last_time = rospy.Time().now()
+
 
     def waypoints_cb(self, waypoints):
         self.way_points = waypoints.waypoints
