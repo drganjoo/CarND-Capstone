@@ -36,7 +36,7 @@ Ros Node: **waypoint_updater** (only implemented partially, does not look for tr
 
 *Overall Strategy*:
 
-Figures out the current linear and angular velocity of the car by subscribing to /current_velocity topic. Error is calculated between the proposed velocities (linear/angular) being sent on the /twist_cmd topic and the current linear/angular velocity of the car. Two simple PID controllers are used for throttle and steering. Values returned by the PID controller are sent to /vehicle/throttle_cmd and /vehicle/steering_cmd topics. Since traffic lights have not been detected, brake is set to 0.
+Figures out the current linear and angular velocity of the car by subscribing to /current_velocity topic. Error is calculated between the proposed velocities (linear/angular) being sent on the /twist_cmd topic and the current linear/angular velocity of the car. A simple PID controller is used for throttle. For steering, the already given, YAWController is used. Values returned by the PID controller are sent to /vehicle/throttle_cmd and /vehicle/steering_cmd topics. Since traffic lights have not been detected, brake is set to 0.
 
 Ros Node: **dbw_node** 
 
@@ -45,16 +45,12 @@ Ros Node: **dbw_node**
 |Throttle_P|1.0|
 |Throttle_I|0.0|
 |Throttle_D|0.0|
-|Steering_P|2.0|
-|Steering_I|0.0|
-|Steering_D|0.0|
 
 **Shortcomings**
 
 1) Would have liked to implement MPC instead of a simple PID controller
-2) Max / Min Steering has been implemented using -1 to 1 range. Where as ~max_steer_angle is set to 8. So need to fix that
-3) Integral and Derivatives should be properly tuned (or calculated using twiddle)
-4) Braking should be calculated. Plan on using a range of -1 to 1 for throttle and then use negative values to brake.
+2) Integral and Derivatives should be properly tuned (or calculated using twiddle)
+3) Braking should be calculated. Plan on using a range of -1 to 1 for throttle and then use negative values to brake.
 
 
 ## Traffic Light Detection
