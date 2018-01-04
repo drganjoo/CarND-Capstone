@@ -8,6 +8,7 @@ import math
 
 from twist_controller import Controller
 from timed_logger import TimedLogger
+from yaw_controller import YawController
 
 '''
 You can build this node only after you have built (or partially built) the `waypoint_updater` node.
@@ -54,7 +55,8 @@ class DBWNode(object):
         self.brake_pub = rospy.Publisher('/vehicle/brake_cmd',
                                          BrakeCmd, queue_size=1)
 
-        self.controller = Controller()
+        yaw_controller = YawController(wheel_base, steer_ratio, 0, max_lat_accel, max_steer_angle)
+        self.controller = Controller(yaw_controller)
 
         rospy.Subscriber('/vehicle/dbw_enabled', Bool, self.dbw_enabled_cb)
         rospy.Subscriber('/twist_cmd', TwistStamped, self.twist_cb)
