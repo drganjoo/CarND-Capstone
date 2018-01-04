@@ -38,14 +38,12 @@ class WaypointUpdater(object):
 
         self.final_waypoints_pub = rospy.Publisher('/final_waypoints', Lane, queue_size=1)
 
-        # TODO: Add other member variables you need below
         self.way_points = None
         self.last_point = 0
         self.points_to_look = 0      # how many points to look at
 
         self.timed_logger = TimedLogger(1)
 
-        print('WaypointUpdater about to go for spinning')
         rospy.spin()
 
     def pose_cb(self, msg):
@@ -85,14 +83,16 @@ class WaypointUpdater(object):
         # publish the points to the rest of the nodes
         self.final_pub.publish(lane)
 
-        self.timed_logger.log('[waypoint_updater] start_index:%d, points_to_look_at:%s', self.last_point, self.points_to_look)
-
+        #self.timed_logger.log('[waypoint_updater] start_index:%d, points_to_look_at:%s', self.last_point, self.points_to_look)
 
     def waypoints_cb(self, waypoints):
         self.way_points = waypoints.waypoints
-        self.points_to_look = len(waypoints.waypoints)
 
-        print('Waypoints received')
+        # For next time don't look at all the data in the world map. Just use some nearby
+        # points to figure out the closest point.
+
+        # points_to_look holds the number of points to check at max
+        self.points_to_look = len(waypoints.waypoints)
 
         # for waypoint in waypoints.waypoints:
         #     position = waypoint.pose.pose.position
