@@ -82,11 +82,12 @@ class DBWNode(object):
             if self.dbw_enabled:
                 self.publish(throttle, brake, steering)
 
-            diff = rospy.Time().now() - self.last_time
-            if diff > rospy.Duration(1):
-                print(self.dbw_enabled, self.velocity, self.angular_velocity, self.proposed_velocity, self.proposed_angular_velocity)
-                self.last_time = rospy.Time().now()
+            # diff = rospy.Time().now() - self.last_time
+            # if diff > rospy.Duration(1):
+            #     print(self.dbw_enabled, self.velocity, self.angular_velocity, self.proposed_velocity, self.proposed_angular_velocity)
+            #     self.last_time = rospy.Time().now()
 
+            rospy.loginfo('DBW: %s, V/P = %s, V/C = %s', self.dbw_enabled, self.proposed_velocity, self.velocity)
             rate.sleep()
 
     def dbw_enabled_cb(self, enabled):
