@@ -7,6 +7,7 @@ from geometry_msgs.msg import TwistStamped
 import math
 
 from twist_controller import Controller
+from timed_logger import TimedLogger
 
 '''
 You can build this node only after you have built (or partially built) the `waypoint_updater` node.
@@ -58,7 +59,9 @@ class DBWNode(object):
         rospy.Subscriber('/vehicle/dbw_enabled', Bool, self.dbw_enabled_cb)
         rospy.Subscriber('/twist_cmd', TwistStamped, self.twist_cb)
         rospy.Subscriber('/current_velocity', TwistStamped, self.current_velocity_cb)
-        
+
+        self.timed_logger = TimedLogger(1.0)
+
         self.velocity = 0
         self.angular_velocity = 0
         self.proposed_angular_velocity = 0
@@ -73,37 +76,36 @@ class DBWNode(object):
             # TODO: Get predicted throttle, brake, and steering using `twist_controller`
             # You should only publish the control commands if dbw is enabled
 
-            throttle, brake, steering = self.controller.control(self.proposed_velocity,
-                                                                self.proposed_angular_velocity,
-                                                                self.velocity,
-                                                                self.angular_velocity,
-                                                                self.dbw_enabled)
-                                                                
             if self.dbw_enabled:
+                throttle, brake, steering = self.controller.control(self.proposed_velocity,
+                                                                    self.velocity,
+                                                                    self.proposed_angular_velocity,
+                                                                    self.angular_velocity)
                 self.publish(throttle, brake, steering)
+            else:
+                throttle, brake, steering = [0,0,0]
 
-            # diff = rospy.Time().now() - self.last_time
-            # if diff > rospy.Duration(1):
-            #     print(self.dbw_enabled, self.velocity, self.angular_velocity, self.proposed_velocity, self.proposed_angular_velocity)
-            #     self.last_time = rospy.Time().now()
 
-            rospy.loginfo('DBW: %s, V/P = %s, V/C = %s', self.dbw_enabled, self.proposed_velocity, self.velocity)
+            self.timed_logger.log('[dbw]%s Vel:P=%.3f,C=%.3f AngVel:P=%.3f,C=%.3f Command:%.1f,%.1f,%.1f',
+                                  self.dbw_enabled,
+                                  self.proposed_velocity, self.velocity,
+                                  self.proposed_angular_velocity, self.angular_velocity,
+                                  throttle, brake, steering)
             rate.sleep()
 
-    def dbw_enabled_cb(self, enabled):
+    def dbw_enabled_cb(self, msg):
+        enabled = msg.data
+        if not enabled:
+            self.controller.reset()
+        else:
+            self.controller.start()
+
         self.dbw_enabled = enabled
-        print('dbw_enabled_cb called')
+        rospy.loginfo('[dbw_node] dbw_enabled=%s', self.dbw_enabled)
 
     def twist_cb(self, msg):
         self.proposed_velocity = msg.twist.linear.x
-        self.angular_velocity = msg.twist.angular.z
- 
-        # diff = rospy.Time().now() - self.last_time
-        # if diff > rospy.Duration(1):
-        #     print(self.dbw_enabled, msg.twist.linear.x, msg.twist.linear.y, msg.twist.linear.z)
-        #     print(msg.twist.angular.x, msg.twist.angular.y, msg.twist.angular.z)
-        #     self.last_time = rospy.Time().now()
-
+        self.proposed_angular_velocity = msg.twist.angular.z
 
     def current_velocity_cb(self, msg):
         self.velocity = msg.twist.linear.x

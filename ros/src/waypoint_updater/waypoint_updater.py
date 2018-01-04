@@ -4,6 +4,7 @@ import rospy
 import tf
 from geometry_msgs.msg import PoseStamped
 from styx_msgs.msg import Lane, Waypoint
+from timed_logger import TimedLogger
 
 import math
 
@@ -41,7 +42,8 @@ class WaypointUpdater(object):
         self.way_points = None
         self.last_point = 0
         self.points_to_look = 0      # how many points to look at
-        self.last_time = rospy.Time().now()
+
+        self.timed_logger = TimedLogger(1)
 
         print('WaypointUpdater about to go for spinning')
         rospy.spin()
@@ -83,9 +85,7 @@ class WaypointUpdater(object):
         # publish the points to the rest of the nodes
         self.final_pub.publish(lane)
 
-        if rospy.Time().now() - self.last_time > rospy.Duration(1):
-            print('published, lookfor: {}, start_index: {}'.format(self.points_to_look, self.last_point))
-            self.last_time = rospy.Time().now()
+        self.timed_logger.log('[waypoint_updater] start_index:%d, points_to_look_at:%s', self.last_point, self.points_to_look)
 
 
     def waypoints_cb(self, waypoints):

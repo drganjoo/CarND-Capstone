@@ -1,4 +1,7 @@
+#!/usr/bin/env python
+
 import rospy
+from rosgraph_msgs.msg import Log
 
 class Debug:
     def __init__(self, sleep_time):
@@ -6,7 +9,7 @@ class Debug:
         self.msg = []
 
         rospy.init_node('debug_node')
-        rospy.subscribe('/ros_topic', self.msg_cb)
+        rospy.Subscriber('/rosout', Log, self.msg_cb)
 
         self.loop()
 
@@ -21,4 +24,11 @@ class Debug:
             rate.sleep()
 
     def msg_cb(self, msg):
-        self.msg.append(msg)
+        self.msg.append(msg.msg)
+
+
+if __name__ == '__main__':
+    try:
+        Debug(1.0)
+    except rospy.ROSInterruptException:
+        pass
